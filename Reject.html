@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Reject request | Inventory System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <a class="skip" href="#main">Skip to forms</a>
+    <header>
+        <h1>Inventory Management System: Form Controls</h1>
+        <p>Tandang Sora plant. Four forms with validation and in-page data handling.</p>
+    </header>
+    <main id="main">
+        <nav aria-label="Forms">
+            <a class="tab" href="account.html">Create account</a>
+            <a class="tab" href="restock.html">Restock inventory</a>
+            <a class="tab" href="login.html">Log in</a>
+            <a class="tab" href="reject.html" aria-current="page">Reject request</a>
+        </nav>
+        <section class="panel" id="p-reject">
+            <h2>Reject request</h2>
+            <p class="purpose">Managers document why a request slip is rejected and return it to the requester.</p>
+            <form id="f-reject" novalidate>
+                <div class="grid">
+                    <div>
+                        <label for="request_id" class="req">Request ID</label>
+                        <input type="text" id="request_id" name="request_id" value="REQ-1001" placeholder="e.g. REQ-1001" aria-describedby="request_id-help request_id-err">
+                        <p class="help" id="request_id-help">Only requests with status Pending can be rejected.</p>
+                        <p class="err" id="request_id-err" role="alert"></p>
+                    </div>
+                    <div>
+                        <label for="rejection_category" class="req">Reason category</label>
+                        <select id="rejection_category" name="rejection_category" aria-describedby="rejection_category-err">
+                            <option value="">Select reason</option>
+                            <option>Out of Stock</option>
+                            <option>Incomplete Documentation</option>
+                            <option>Discrepancy in Quantity</option>
+                            <option>Other</option>
+                        </select>
+                        <p class="err" id="rejection_category-err" role="alert"></p>
+                    </div>
+                    <div class="full">
+                        <label for="manager_comments" class="req">Manager comments</label>
+                        <textarea id="manager_comments" name="manager_comments" rows="4" maxlength="500" placeholder="Explain why this request is rejected" aria-describedby="manager_comments-help manager_comments-err"></textarea>
+                        <p class="help" id="manager_comments-help">At least 10 characters. <span id="cc">0</span>/500</p>
+                        <p class="err" id="manager_comments-err" role="alert"></p>
+                    </div>
+                    <div>
+                        <label class="opt">
+                            <input type="checkbox" id="return_to_requester" name="return_to_requester" checked> Notify the requester
+                        </label>
+                        <label class="switch" style="margin-top:8px">
+                            <input type="checkbox" role="switch" id="allow_resubmission" name="allow_resubmission" checked> Allow resubmission
+                        </label>
+                    </div>
+                    <div>
+                        <label for="review_date">Review date</label>
+                        <input type="date" id="review_date" name="review_date" readonly aria-describedby="review_date-help">
+                        <p class="help" id="review_date-help">Set to today automatically.</p>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn">Reject request</button>
+                    <button type="button" class="btn sec" id="cancel_btn">Cancel and go back</button>
+                </div>
+                <div class="msg" id="reject-msg" role="status"></div>
+            </form>
+            <div class="tw">
+                <table>
+                    <caption>Request slips</caption>
+                    <thead>
+                        <tr>
+                            <th>Request</th>
+                            <th>Status</th>
+                            <th>Reason</th>
+                            <th>Resubmit</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reject-rows"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <script src="script.js"></script>
+</body>
+
+</html>
