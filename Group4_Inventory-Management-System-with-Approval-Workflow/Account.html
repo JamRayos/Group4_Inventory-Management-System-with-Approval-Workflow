@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Create account | Inventory System</title>
+    <link rel="stylesheet" href="Account.css" />
+  </head>
+
+  <body>
+    <a class="skip" href="#main">Skip to forms</a>
+    <header>
+      <h1>Inventory Management System: Form Controls</h1>
+      <p>
+        Tandang Sora plant. Four forms with validation and in-page data
+        handling.
+      </p>
+    </header>
+    <main id="main">
+      <nav aria-label="Forms">
+        <a class="tab" href="account.html" aria-current="page"
+          >Create account</a
+        >
+        <a class="tab" href="restock.html">Restock inventory</a>
+        <a class="tab" href="login.html">Log in</a>
+        <a class="tab" href="reject.html">Reject request</a>
+      </nav>
+      <section class="panel" id="p-account">
+        <h2>Create user account</h2>
+        <p class="purpose">
+          Admins register a new employee and issue a temporary password. Fields
+          marked * are required.
+        </p>
+        <form id="f-account" novalidate>
+          <div class="grid">
+            <div>
+              <label for="first_name" class="req">First name</label>
+              <input
+                type="text"
+                id="first_name"
+                name="first_name"
+                autocomplete="given-name"
+                placeholder="e.g. Maria"
+                aria-describedby="first_name-err"
+              />
+              <p class="err" id="first_name-err" role="alert"></p>
+            </div>
+            <div>
+              <label for="last_name" class="req">Last name</label>
+              <input
+                type="text"
+                id="last_name"
+                name="last_name"
+                autocomplete="family-name"
+                placeholder="e.g. Santos"
+                aria-describedby="last_name-err"
+              />
+              <p class="err" id="last_name-err" role="alert"></p>
+            </div>
+            <div>
+              <label for="email_address" class="req">Email address</label>
+              <input
+                type="email"
+                id="email_address"
+                name="email_address"
+                autocomplete="email"
+                placeholder="name@company.com"
+                aria-describedby="email_address-help email_address-err"
+              />
+              <p class="help" id="email_address-help">
+                Login credentials will be sent here.
+              </p>
+              <p class="err" id="email_address-err" role="alert"></p>
+            </div>
+            <div>
+              <label for="contact_number">Contact number</label>
+              <input
+                type="tel"
+                id="contact_number"
+                name="contact_number"
+                inputmode="numeric"
+                autocomplete="tel"
+                placeholder="09171234567"
+                aria-describedby="contact_number-help contact_number-err"
+              />
+              <p class="help" id="contact_number-help">
+                PH mobile: 09XXXXXXXXX or +639XXXXXXXXX.
+              </p>
+              <p class="err" id="contact_number-err" role="alert"></p>
+            </div>
+            <div>
+              <label for="department" class="req">Department</label>
+              <select
+                id="department"
+                name="department"
+                aria-describedby="department-err"
+              >
+                <option value="">Select department</option>
+                <option>Admin</option>
+                <option>Inventory/Warehouse</option>
+                <option>Operations</option>
+              </select>
+              <p class="err" id="department-err" role="alert"></p>
+            </div>
+            <div>
+              <fieldset
+                id="access_level"
+                aria-describedby="access_level-help access_level-err"
+              >
+                <legend class="req">Access level</legend>
+                <label class="opt"
+                  ><input type="radio" name="access_level" value="1" /> Level 1
+                  (Admin)</label
+                >
+                <label class="opt"
+                  ><input type="radio" name="access_level" value="2" /> Level 2
+                  (Inventory)</label
+                >
+                <label class="opt"
+                  ><input type="radio" name="access_level" value="3" /> Level 3
+                  (Operations)</label
+                >
+              </fieldset>
+              <p class="help" id="access_level-help">
+                Must match the department.
+              </p>
+              <p class="err" id="access_level-err" role="alert"></p>
+            </div>
+            <div class="full">
+              <label class="switch"
+                ><input
+                  type="checkbox"
+                  role="switch"
+                  id="employment_status"
+                  name="employment_status"
+                  checked
+                  aria-describedby="employment_status-help"
+                />
+                Employment status: <span id="status_text">Active</span></label
+              >
+              <p class="help" id="employment_status-help">
+                Turn off to create the account as Inactive.
+              </p>
+            </div>
+            <div class="full">
+              <label for="additional_notes">Additional notes</label>
+              <textarea
+                id="additional_notes"
+                name="additional_notes"
+                rows="3"
+                maxlength="300"
+                placeholder="Onboarding remarks or facility role notes"
+                aria-describedby="additional_notes-help"
+              ></textarea>
+              <p class="help" id="additional_notes-help">
+                Optional, up to 300 characters.
+              </p>
+            </div>
+          </div>
+          <div class="actions">
+            <button type="submit" class="btn">Create account</button>
+            <button type="reset" class="btn sec">Clear form</button>
+          </div>
+          <div class="msg" id="account-msg" role="status"></div>
+        </form>
+        <div class="tw">
+          <table>
+            <caption>
+              Registered accounts
+            </caption>
+            <thead>
+              <tr>
+                <th>Company ID</th>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Level</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="account-rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script>
+      "use strict";
+      const $ = (id) => document.getElementById(id);
+      const today = new Date().toISOString().slice(0, 10);
+      function showErrors(form, errs) {
+        form.querySelectorAll(".err").forEach((e) => (e.textContent = ""));
+        form
+          .querySelectorAll("[aria-invalid]")
+          .forEach((e) => e.removeAttribute("aria-invalid"));
+        const keys = Object.keys(errs);
+        keys.forEach((k) => {
+          $(k + "-err").textContent = errs[k];
+          $(k).setAttribute("aria-invalid", "true");
+        });
+        if (keys.length) {
+          const first = $(keys[0]);
+          (first.matches("fieldset")
+            ? first.querySelector("input")
+            : first
+          ).focus();
+        }
+        return keys.length === 0;
+      }
+      function msg(id, text, ok) {
+        const m = $(id);
+        m.textContent = text;
+        m.className = "msg " + (ok ? "ok" : "bad");
+      }
+      function addRow(tbody, cells, top) {
+        const tr = document.createElement("tr");
+        cells.forEach((c) => {
+          const td = document.createElement("td");
+          td.textContent = c;
+          tr.appendChild(td);
+        });
+        top ? tbody.prepend(tr) : tbody.appendChild(tr);
+      }
+      function resetUI(form, msgId) {
+        setTimeout(() => {
+          showErrors(form, {});
+          $(msgId).textContent = "";
+          $(msgId).className = "msg";
+        }, 0);
+      }
+      const USERS_KEY = "inv_users";
+      function loadUsers() {
+        try {
+          const u = JSON.parse(localStorage.getItem(USERS_KEY));
+          if (Array.isArray(u) && u.length) return u;
+        } catch (_) {}
+        return [{ id: "ADMIN-001", pw: "Admin@123", group: "Admin" }];
+      }
+      function saveUsers(u) {
+        try {
+          localStorage.setItem(USERS_KEY, JSON.stringify(u));
+        } catch (_) {}
+      }
+      const EMAIL = /^[\w.-]+@[\w.-]+\.[a-zA-Z]{2,}$/;
+      const PHONE = /^(09\d{9}|\+639\d{9})$/;
+      const users = loadUsers();
+      const DEPT_LEVEL = {
+        Admin: "1",
+        "Inventory/Warehouse": "2",
+        Operations: "3",
+      };
+      $("employment_status").addEventListener(
+        "change",
+        (e) =>
+          ($("status_text").textContent = e.target.checked
+            ? "Active"
+            : "Inactive"),
+      );
+      $("f-account").addEventListener("reset", () => {
+        resetUI($("f-account"), "account-msg");
+        $("status_text").textContent = "Active";
+      });
+      $("f-account").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const f = e.target,
+          errs = {};
+        const first = f.first_name.value.trim(),
+          last = f.last_name.value.trim();
+        const email = f.email_address.value.trim(),
+          phone = f.contact_number.value.trim().replace(/[\s-]/g, "");
+        const dept = f.department.value,
+          lvl = (f.querySelector("[name=access_level]:checked") || {}).value;
+        if (!first) errs.first_name = "Enter the first name.";
+        else if (first.length < 2)
+          errs.first_name = "First name needs at least 2 characters.";
+        if (!last) errs.last_name = "Enter the last name.";
+        else if (last.length < 2)
+          errs.last_name = "Last name needs at least 2 characters.";
+        if (!email) errs.email_address = "Enter an email address.";
+        else if (!EMAIL.test(email))
+          errs.email_address = "Use the format name@company.com.";
+        if (phone && !PHONE.test(phone))
+          errs.contact_number =
+            "Use 09XXXXXXXXX or +639XXXXXXXXX (Philippine mobile).";
+        if (!dept) errs.department = "Select a department.";
+        if (!lvl) errs.access_level = "Select an access level.";
+        else if (dept && DEPT_LEVEL[dept] !== lvl)
+          errs.access_level =
+            "Level " + DEPT_LEVEL[dept] + " is required for " + dept + ".";
+        if (users.some((u) => u.email === email.toLowerCase()))
+          errs.email_address = "An account with this email already exists.";
+        if (!showErrors(f, errs))
+          return msg(
+            "account-msg",
+            "Account not created. Fix the highlighted fields.",
+            false,
+          );
+
+        const id = "EMP-" + String(users.length).padStart(4, "0");
+        const pw = Math.random().toString(36).slice(2, 10) + "A1!"; // demo only: real system hashes (bcrypt) and emails it
+        users.push({
+          id,
+          pw,
+          email: email.toLowerCase(),
+          group: lvl === "1" ? "Admin" : "Staff",
+        });
+        saveUsers(users);
+        addRow($("account-rows"), [
+          id,
+          first + " " + last,
+          dept,
+          lvl,
+          f.employment_status.checked ? "Active" : "Inactive",
+        ]);
+        f.reset();
+        msg(
+          "account-msg",
+          "Account created. Company ID: " +
+            id +
+            ". Temporary password (demo): " +
+            pw,
+          true,
+        );
+      });
+    </script>
+  </body>
+</html>
