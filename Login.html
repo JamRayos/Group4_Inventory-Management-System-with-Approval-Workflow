@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Log in | Inventory System</title>
+    <link rel="stylesheet" href="Login.css">
+</head>
+
+<body>
+    <a class="skip" href="#main">Skip to forms</a>
+    <header>
+        <h1>Inventory Management System: Form Controls</h1>
+        <p>Tandang Sora plant. Four forms with validation and in-page data handling.</p>
+    </header>
+    <main id="main">
+        <nav aria-label="Forms">
+            <a class="tab" href="account.html">Create account</a>
+            <a class="tab" href="restock.html">Restock inventory</a>
+            <a class="tab" href="login.html" aria-current="page">Log in</a>
+            <a class="tab" href="reject.html">Reject request</a>
+        </nav>
+        <section class="panel" id="p-login">
+            <h2>Log in</h2>
+            <p class="purpose">Sign in with your company ID. Demo account: ADMIN-001 / Admin@123. Accounts created on
+                the Create account page also work with their temporary password.</p>
+            <form id="f-login" novalidate>
+                <input type="hidden" id="csrf_token" name="csrf_token" value="">
+                <div class="grid">
+                    <div><label for="company_id" class="req">Company ID</label>
+                        <input type="text" id="company_id" name="company_id" autocomplete="username"
+                            placeholder="e.g. ADMIN-001" aria-describedby="company_id-err">
+                        <p class="err" id="company_id-err" role="alert"></p>
+                    </div>
+                    <div><label for="password" class="req">Password</label>
+                        <input type="password" id="password" name="password" autocomplete="current-password"
+                            placeholder="Enter your password" aria-describedby="password-err">
+                        <p class="err" id="password-err" role="alert"></p>
+                    </div>
+                    <div>
+                        <fieldset id="login_role" aria-describedby="login_role-help">
+                            <legend>Portal</legend>
+                            <label class="opt"><input type="radio" name="login_role" value="Admin"> Admin</label>
+                            <label class="opt"><input type="radio" name="login_role" value="Staff" checked>
+                                Staff</label>
+                        </fieldset>
+                        <p class="help" id="login_role-help">Checked against your stored role.</p>
+                    </div>
+                    <div>
+                        <label class="switch" style="margin-top:4px"><input type="checkbox" role="switch"
+                                id="show_password"> Show password</label>
+                        <label class="opt" style="margin-top:10px"><input type="checkbox" id="remember_me"
+                                name="remember_me"> Remember my company ID</label>
+                        <p class="help"><a href="#" id="forgot">Forgot password?</a></p>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn">Log in</button>
+                    <button type="reset" class="btn sec">Clear</button>
+                </div>
+                <div class="msg" id="login-msg" role="status"></div>
+            </form>
+        </section>
+    </main>
+    <script>
+        "use strict";
+        const $ = id => document.getElementById(id);
+        const today = new Date().toISOString().slice(0, 10);
+        function showErrors(form, errs) {
+            form.querySelectorAll(".err").forEach(e => e.textContent = "");
+            form.querySelectorAll("[aria-invalid]").forEach(e => e.removeAttribute("aria-invalid"));
+            const keys = Object.keys(errs);
+            keys.forEach(k => { $(k + "-err").textContent = errs[k]; $(k).setAttribute("aria-invalid", "true"); });
+            if (keys.length) {
+                const first = $(keys[0]);
+                (first.matches("fieldset") ? first.querySelector("input") : first).focus();
+            }
+            return keys.length === 0;
+        }
+        function msg(id, text, ok) { const m = $(id); m.textContent = text; m.className = "msg " + (ok ? "ok" : "bad"); }
+        function addRow(tbody, cells, top) {
+            const tr = document.createElement("tr");
+            cells.forEach(c => { const td = document.createElement("td"); td.textContent = c; tr.appendChild(td); });
+            top ? tbody.prepend(tr) : tbody.appendChild(tr);
+        }
+        function resetUI(form, msgId) {
+            setTimeout(() => { showErrors(form, {}); $(msgId).textContent = ""; $(msgId).className = "msg"; }, 0);
+        }
+        const USERS_KEY = "inv_users";
+        function loadUsers() {
+            try { const u = JSON.parse(localStorage.getItem(USERS_KEY)); if (Array.isArray(u) && u.length) return u; } catch (_) { }
+            return [{ id: "ADMIN-001", pw: "Admin@123", group: "Admin" }];
+        }
+        function saveUsers(u) { try { localStorage.setItem(USERS_KEY, JSON.stringify(u)); } catch (_) { } }
+        $("csrf_token").value = Math.random().toString(36).slice(2) + Date.now().toString(36);
+        const fails = {}, MAX_FAILS = 3;
+        try { const s = localStorage.getItem("company_id"); if (s) { $("company_id").value = s; $("remember_me").checked = true; } } catch (_) { }
+        $("show_password").addEventListener("change", e => $("password").type = e.target.checked ? "text" : "password");
+        $("forgot").addEventListener("click", e => { e.preventDefault(); msg("login-msg", "Password reset is handled by your administrator. Contact them with your company ID.", true); });
+        $("f-login").addEventListener("reset", () => { resetUI($("f-login"), "login-msg"); $("password").type = "password"; });
+        $("f-login").addEventListener("submit", e => {
+            e.preventDefault();
+            const f = e.target, errs = {};
+            const id = f.company_id.value.trim().toUpperCase(), pw = f.password.value;
+            if (!id) errs.company_id = "Enter your company ID.";
+            else if (!/^[A-Z0-9\-]{4,20}$/.test(id)) errs.company_id = "Company ID uses letters, numbers and dashes (4 to 20 characters).";
+            if (!pw) errs.password = "Enter your password.";
+            if (!showErrors(f, errs)) return msg("login-msg", "Fix the highlighted fields to continue.", false);
+
+            if ((fails[id] || 0) >= MAX_FAILS) return msg("login-msg", "This account is locked after " + MAX_FAILS + " failed attempts. Contact an administrator.", false);
+            const users = loadUsers();   // read fresh so newly created accounts work
+            const u = users.find(x => x.id === id), role = f.querySelector("[name=login_role]:checked").value;
+            if (!u || u.pw !== pw) {
+                fails[id] = (fails[id] || 0) + 1;
+                return msg("login-msg", "Company ID or password is incorrect. Attempts left: " + Math.max(MAX_FAILS - fails[id], 0) + ".", false);
+            }
+            if (u.group !== role) return msg("login-msg", "This account does not have access to the " + role + " portal.", false);
+            fails[id] = 0;
+            try { f.remember_me.checked ? localStorage.setItem("company_id", id) : localStorage.removeItem("company_id"); } catch (_) { }
+            msg("login-msg", "Welcome, " + id + ". Redirecting to the " + role + " dashboard (demo).", true);
+        });
+    </script>
+</body>
+
+</html>
