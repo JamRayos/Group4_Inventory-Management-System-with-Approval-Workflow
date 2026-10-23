@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Restock inventory | Inventory System</title>
+    <!-- Connecting the separated CSS file -->
+    <link rel="stylesheet" href="Restock.css">
+</head>
+
+<body>
+    <a class="skip" href="#main">Skip to forms</a>
+    <header>
+        <h1>Inventory Management System: Form Controls</h1>
+        <p>Tandang Sora plant. Four forms with validation and in-page data handling.</p>
+    </header>
+    <main id="main">
+        <nav aria-label="Forms">
+            <a class="tab" href="account.html">Create account</a>
+            <a class="tab" href="restock.html" aria-current="page">Restock inventory</a>
+            <a class="tab" href="login.html">Log in</a>
+            <a class="tab" href="reject.html">Reject request</a>
+        </nav>
+        <section class="panel" id="p-restock">
+            <h2>Restock inventory</h2>
+            <p class="purpose">Warehouse staff log a received delivery and add it to the stock balance.</p>
+            <form id="f-restock" novalidate>
+                <div class="grid">
+                    <div><label for="supplier_delivery_receipt" class="req">Delivery receipt / invoice no.</label>
+                        <input type="text" id="supplier_delivery_receipt" name="supplier_delivery_receipt"
+                            placeholder="e.g. DR-2026-0457" aria-describedby="supplier_delivery_receipt-err">
+                        <p class="err" id="supplier_delivery_receipt-err" role="alert"></p>
+                    </div>
+                    <div><label for="item_sku" class="req">Item</label>
+                        <select id="item_sku" name="item_sku" aria-describedby="item_sku-err">
+                            <option value="">Select item</option>
+                            <option value="RM-001">RM-001 Base solvent</option>
+                            <option value="RM-002">RM-002 Pigment powder</option>
+                            <option value="FP-101">FP-101 Finished cleaner 1L</option>
+                            <option value="PK-201">PK-201 Plastic bottles</option>
+                        </select>
+                        <p class="err" id="item_sku-err" role="alert"></p>
+                    </div>
+                    <div><label for="received_quantity" class="req">Quantity received</label>
+                        <input type="number" id="received_quantity" name="received_quantity" min="1" step="1"
+                            placeholder="e.g. 50" aria-describedby="received_quantity-help received_quantity-err">
+                        <p class="help" id="received_quantity-help">Whole number greater than 0.</p>
+                        <p class="err" id="received_quantity-err" role="alert"></p>
+                    </div>
+                    <div><label for="unit_of_measure" class="req">Unit of measure</label>
+                        <select id="unit_of_measure" name="unit_of_measure" aria-describedby="unit_of_measure-err">
+                            <option value="">Select unit</option>
+                            <option>Liters</option>
+                            <option>Kilograms</option>
+                            <option>Pieces</option>
+                        </select>
+                        <p class="err" id="unit_of_measure-err" role="alert"></p>
+                    </div>
+                    <div><label for="received_date" class="req">Date received</label>
+                        <input type="date" id="received_date" name="received_date"
+                            aria-describedby="received_date-help received_date-err">
+                        <p class="help" id="received_date-help">Cannot be in the future.</p>
+                        <p class="err" id="received_date-err" role="alert"></p>
+                    </div>
+                    <div><label for="expiration_date" class="req">Expiration date</label>
+                        <input type="date" id="expiration_date" name="expiration_date"
+                            aria-describedby="expiration_date-help expiration_date-err">
+                        <p class="help" id="expiration_date-help">Must be after the date received.</p>
+                        <p class="err" id="expiration_date-err" role="alert"></p>
+                    </div>
+                    <div>
+                        <fieldset id="storage_location" aria-describedby="storage_location-err">
+                            <legend class="req">Storage location</legend>
+                            <label class="opt"><input type="radio" name="storage_location" value="Section A - Liquid">
+                                Section A (Liquid)</label>
+                            <label class="opt"><input type="radio" name="storage_location" value="Section B - Powder">
+                                Section B (Powder)</label>
+                            <label class="opt"><input type="radio" name="storage_location"
+                                    value="Section C - Packaging"> Section C (Packaging)</label>
+                        </fieldset>
+                        <p class="err" id="storage_location-err" role="alert"></p>
+                    </div>
+                    <div><label class="opt" style="margin-top:22px"><input type="checkbox" id="qc_passed"
+                                name="qc_passed" aria-describedby="qc_passed-help qc_passed-err"> Shipment passed
+                            physical inspection</label>
+                        <p class="help" id="qc_passed-help">Required before stock can be added.</p>
+                        <p class="err" id="qc_passed-err" role="alert"></p>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn">Save stock entry</button>
+                    <button type="reset" class="btn sec">Clear form</button>
+                </div>
+                <div class="msg" id="restock-msg" role="status"></div>
+            </form>
+            <div class="tw">
+                <table>
+                    <caption>Stock balances</caption>
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Balance</th>
+                            <th>Unit</th>
+                            <th>Last receipt</th>
+                        </tr>
+                    </thead>
+                    <tbody id="restock-rows"></tbody>
+                </table>
+            </div>
+            <div class="tw">
+                <table>
+                    <caption>Audit log</caption>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="audit-rows"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+    <script>
+        "use strict";
+        const $ = id => document.getElementById(id);
+        const today = new Date().toISOString().slice(0, 10);
+        function showErrors(form, errs) {
+            form.querySelectorAll(".err").forEach(e => e.textContent = "");
+            form.querySelectorAll("[aria-invalid]").forEach(e => e.removeAttribute("aria-invalid"));
+            const keys = Object.keys(errs);
+            keys.forEach(k => { $(k + "-err").textContent = errs[k]; $(k).setAttribute("aria-invalid", "true"); });
+            if (keys.length) {
+                const first = $(keys[0]);
+                (first.matches("fieldset") ? first.querySelector("input") : first).focus();
+            }
+            return keys.length === 0;
+        }
+        function msg(id, text, ok) { const m = $(id); m.textContent = text; m.className = "msg " + (ok ? "ok" : "bad"); }
+        function addRow(tbody, cells, top) {
+            const tr = document.createElement("tr");
+            cells.forEach(c => { const td = document.createElement("td"); td.textContent = c; tr.appendChild(td); });
+            top ? tbody.prepend(tr) : tbody.appendChild(tr);
+        }
+        function resetUI(form, msgId) {
+            setTimeout(() => { showErrors(form, {}); $(msgId).textContent = ""; $(msgId).className = "msg"; }, 0);
+        }
+        const stock = {};
+        $("received_date").max = today;
+        $("received_date").addEventListener("change", e => $("expiration_date").min = e.target.value);
+        $("f-restock").addEventListener("reset", () => resetUI($("f-restock"), "restock-msg"));
+        $("f-restock").addEventListener("submit", e => {
+            e.preventDefault();
+            const f = e.target, errs = {};
+            const dr = f.supplier_delivery_receipt.value.trim(), sku = f.item_sku.value, qty = Number(f.received_quantity.value);
+            const rd = f.received_date.value, ex = f.expiration_date.value, loc = f.querySelector("[name=storage_location]:checked");
+            if (!dr) errs.supplier_delivery_receipt = "Enter the delivery receipt or invoice number.";
+            else if (!/^[\w\-\/]{4,30}$/.test(dr)) errs.supplier_delivery_receipt = "Use 4 to 30 letters, numbers, dashes or slashes.";
+            if (!sku) errs.item_sku = "Select the item being restocked.";
+            if (!f.received_quantity.value) errs.received_quantity = "Enter the quantity received.";
+            else if (!Number.isInteger(qty) || qty <= 0) errs.received_quantity = "Quantity must be a whole number greater than 0.";
+            else if (qty > 100000) errs.received_quantity = "Quantity cannot exceed 100,000.";
+            if (!f.unit_of_measure.value) errs.unit_of_measure = "Select the unit of measure.";
+            if (!rd) errs.received_date = "Enter the date received.";
+            else if (rd > today) errs.received_date = "Date received cannot be in the future.";
+            if (!ex) errs.expiration_date = "Enter the expiration date.";
+            else if (rd && ex <= rd) errs.expiration_date = "Expiration date must be after the date received.";
+            if (!loc) errs.storage_location = "Select a storage location.";
+            if (!f.qc_passed.checked) errs.qc_passed = "Confirm the shipment passed inspection.";
+            if (!showErrors(f, errs)) return msg("restock-msg", "Stock not saved. Fix the highlighted fields.", false);
+
+            const unit = f.unit_of_measure.value;
+            const row = stock[sku] || (stock[sku] = { qty: 0, unit });
+            row.qty += qty; row.unit = unit; row.dr = dr;
+            const body = $("restock-rows"); body.innerHTML = "";
+            Object.keys(stock).forEach(k => addRow(body, [k, stock[k].qty, stock[k].unit, stock[k].dr]));
+            addRow($("audit-rows"), [new Date().toLocaleTimeString(), "Restocked " + qty + " " + unit + " of " + sku + " to " + loc.value + " (" + dr + ")"], true);
+            f.reset(); msg("restock-msg", "Saved. Added " + qty + " " + unit + " to " + sku + ".", true);
+        });
+    </script>
+</body>
+
+</html>
